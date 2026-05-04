@@ -1,0 +1,746 @@
+/* ====== Base ====== */
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  color: #1a2433;
+  background: #f3f5f8;
+}
+h1, h2, h3 { margin: 0; }
+button { font-family: inherit; cursor: pointer; }
+input, select, textarea { font-family: inherit; font-size: 1rem; }
+
+/* ====== Header ====== */
+.app-header {
+  background: #1f3a5f;
+  color: #fff;
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.brand { display: flex; align-items: center; gap: 14px; }
+.logo {
+  width: 52px; height: 52px;
+  background: #ffb300;
+  color: #1f3a5f;
+  font-weight: 800;
+  font-size: 22px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  letter-spacing: 1px;
+}
+.app-header h1 { font-size: 20px; font-weight: 700; }
+.tag { margin: 2px 0 0; font-size: 13px; color: #c8d4e6; }
+
+.main-nav { display: flex; gap: 6px; flex-wrap: wrap; }
+.nav-btn {
+  background: transparent;
+  color: #d6e1f0;
+  border: 1px solid transparent;
+  padding: 10px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+.nav-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.nav-btn.active { background: #fff; color: #1f3a5f; }
+
+/* ====== Main / screens ====== */
+.app-main {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 28px;
+}
+.screen { display: none; }
+.screen.active { display: block; }
+.screen-head { margin-bottom: 20px; }
+.screen-head h2 { font-size: 26px; color: #1f3a5f; margin-bottom: 4px; }
+.screen-head p { margin: 0; color: #5a6a80; }
+
+/* ====== Cards ====== */
+.card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(20,40,80,0.06);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5ebf3;
+}
+.card-head h3 { font-size: 17px; color: #1f3a5f; }
+.muted { color: #8492a8; font-size: 13px; }
+
+/* ====== Buttons ====== */
+.btn {
+  border: none;
+  padding: 10px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 6px;
+  transition: filter 0.15s, transform 0.05s;
+}
+.btn:hover { filter: brightness(1.07); }
+.btn:active { transform: translateY(1px); }
+.btn-xl { padding: 14px 24px; font-size: 16px; }
+.btn-primary { background: #2a6df4; color: #fff; }
+.btn-secondary { background: #e5ebf3; color: #1f3a5f; }
+.btn-success { background: #2e9e5b; color: #fff; }
+.btn-warning { background: #e08300; color: #fff; }
+.btn-info { background: #0a8db8; color: #fff; }
+.btn-danger { background: #d94c4c; color: #fff; }
+
+/* ====== Stats ====== */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.stat-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 18px 20px;
+  box-shadow: 0 2px 8px rgba(20,40,80,0.06);
+  border-left: 6px solid #2a6df4;
+}
+.stat-blue   { border-left-color: #2a6df4; }
+.stat-amber  { border-left-color: #ffb300; }
+.stat-green  { border-left-color: #2e9e5b; }
+.stat-purple { border-left-color: #7d4cd9; }
+.stat-label { color: #5a6a80; font-size: 14px; font-weight: 600; }
+.stat-value { font-size: 38px; font-weight: 800; color: #1f3a5f; line-height: 1.1; margin: 4px 0; }
+.stat-sub { color: #8492a8; font-size: 13px; }
+
+/* ====== Quick actions ====== */
+.quick-actions {
+  display: flex; gap: 14px; flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+/* ====== Tables ====== */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+.data-table th, .data-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #eef1f6;
+}
+.data-table th {
+  background: #f7f9fc;
+  color: #5a6a80;
+  font-weight: 600;
+  font-size: 13px;
+}
+.data-table tbody tr:hover { background: #f7faff; }
+.data-table.editable input, .data-table.editable select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #cdd6e4;
+  border-radius: 4px;
+  background: #fff;
+}
+.data-table.editable input:focus, .data-table.editable select:focus {
+  outline: none;
+  border-color: #2a6df4;
+  box-shadow: 0 0 0 3px rgba(42,109,244,0.18);
+}
+.row-delete-btn {
+  background: #fbe6e6;
+  color: #c93030;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+/* ====== Forms ====== */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  padding: 18px 20px;
+}
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field span { font-weight: 600; font-size: 14px; color: #5a6a80; }
+.field input, .field select {
+  padding: 10px 12px;
+  border: 1px solid #cdd6e4;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.action-row {
+  display: flex; gap: 12px; flex-wrap: wrap;
+  padding: 16px 20px;
+}
+.action-row.inline { padding: 0; }
+
+/* ====== Upload ====== */
+.upload-zone {
+  background: #fff;
+  border: 3px dashed #b2c2d8;
+  border-radius: 12px;
+  padding: 56px 24px;
+  text-align: center;
+  transition: background 0.15s, border-color 0.15s;
+  margin-bottom: 20px;
+}
+.upload-zone.drag { background: #eaf2ff; border-color: #2a6df4; }
+.upload-icon { font-size: 64px; margin-bottom: 8px; }
+.upload-title { font-size: 20px; font-weight: 700; color: #1f3a5f; margin-bottom: 6px; }
+.upload-sub { color: #5a6a80; margin-bottom: 18px; }
+.upload-hint { margin-top: 16px; color: #8492a8; font-size: 13px; }
+.file-list {
+  list-style: none;
+  margin: 0; padding: 0;
+}
+.file-list li {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid #eef1f6;
+}
+.file-list li:last-child { border-bottom: none; }
+.file-list .file-name { display: flex; align-items: center; gap: 10px; }
+.file-list .file-icon { font-size: 22px; }
+
+/* ====== Badges ====== */
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.badge-amber { background: #fff3d6; color: #a06a00; }
+.badge-green { background: #d6f1e0; color: #1c6e3d; }
+.badge-blue  { background: #dbe7fe; color: #1a4bbf; }
+.badge-red   { background: #fcdcdc; color: #b22424; }
+.badge-lg    { font-size: 16px; padding: 6px 16px; }
+
+/* ====== OCR controls / split controls ====== */
+.ocr-controls, .split-controls, .print-controls {
+  display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap;
+  background: #fff;
+  padding: 16px 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(20,40,80,0.06);
+  margin-bottom: 20px;
+}
+.ocr-controls .field, .split-controls .field, .print-controls .field { min-width: 280px; }
+.badge-area { margin-left: auto; }
+
+/* ====== Split toolbar ====== */
+.split-toolbar {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(20,40,80,0.06);
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.toolbar-row {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.toolbar-spacer { flex: 1; }
+.field-lg { min-width: 360px; }
+.field-lg select {
+  padding: 12px 14px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.status-area {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 16px;
+}
+.status-label { color: #5a6a80; font-weight: 600; }
+
+/* ====== Split view ====== */
+.split-view {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 1280px) {
+  .split-view { grid-template-columns: 1fr; }
+}
+.split-pane {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(20,40,80,0.06);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  min-height: 760px;
+}
+.pane-head {
+  background: #1f3a5f;
+  color: #fff;
+  padding: 12px 18px;
+  font-weight: 700;
+  font-size: 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px;
+}
+.pane-head-info {
+  font-size: 13px;
+  font-weight: 500;
+  color: #c8d4e6;
+}
+.pane-body {
+  flex: 1;
+  padding: 16px;
+  background: #f3f5f8;
+  overflow: auto;
+}
+.fax-pane { padding: 0; background: #2a3442; }
+.a3-pane  { padding: 18px; background: #d8dee7; }
+
+/* ====== Fax toolbar (zoom / rotate / page nav) ====== */
+.fax-toolbar, .a3-pane-toolbar {
+  background: #f7f9fc;
+  border-bottom: 1px solid #e0e6ee;
+  padding: 8px 14px;
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap;
+}
+.iconbtn {
+  background: #fff;
+  border: 1.5px solid #cdd6e4;
+  color: #1f3a5f;
+  font-size: 18px;
+  font-weight: 700;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.iconbtn:hover { background: #eaf2ff; border-color: #2a6df4; }
+.iconbtn:active { transform: translateY(1px); }
+.iconbtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #f0f2f5;
+}
+.zoom-label, .page-label {
+  display: inline-block;
+  min-width: 56px;
+  text-align: center;
+  font-weight: 700;
+  color: #1f3a5f;
+  font-size: 14px;
+  padding: 0 6px;
+}
+
+/* ====== Fax canvas (zoom + rotate) ====== */
+.fax-viewport {
+  width: 100%;
+  height: 100%;
+  min-height: 700px;
+  overflow: auto;
+  background: #2a3442;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 20px;
+}
+.fax-canvas {
+  background: #fbfaf3;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  transform-origin: center center;
+  transition: transform 0.2s ease;
+}
+.fax-canvas svg {
+  display: block;
+  width: 600px;
+  height: auto;
+}
+
+/* ====== A3 pages inline (right pane) ====== */
+.a3-pages-inline {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+  /* zoom is applied inline via JS — affects layout size, unlike transform */
+}
+.a3-pages-inline .a3-page {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+/* Customer-block base (display only — editing happens via modal) */
+.customer-block { position: relative; }
+
+/* ====== A3 print pages ====== */
+.a3-pages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 0 32px;
+}
+.a3-page {
+  width: 420mm;
+  height: 297mm;
+  background: #fff;
+  box-shadow: 0 4px 18px rgba(20,40,80,0.12);
+  padding: 14mm 16mm;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.a3-page .a3-header {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  border-bottom: 3px solid #1f3a5f;
+  padding-bottom: 6mm;
+  margin-bottom: 6mm;
+}
+.a3-page .a3-title {
+  font-size: 28pt;
+  font-weight: 800;
+  color: #1f3a5f;
+  letter-spacing: 2px;
+}
+.a3-page .a3-subtitle {
+  font-size: 12pt;
+  color: #5a6a80;
+}
+/* === A3 internal-summary layout: 3 NARROW columns packed to the left,
+       each column's right divider sits just past the qty.
+       The freed space on the right of the A3 sheet is left blank. === */
+.a3-page .a3-grid {
+  flex: 1;
+  display: grid;
+  /* 3 fixed-width narrow columns instead of equal thirds of the page.
+     This pulls each column's right divider far to the left. */
+  grid-template-columns: repeat(3, 100mm);
+  justify-content: start;
+  min-height: 0;
+}
+.a3-page .a3-col {
+  display: flex;
+  flex-direction: column;
+  padding: 0 2mm;
+  border-right: 2px solid #000;
+  min-height: 0;
+}
+/* Every column (including the rightmost) gets the same right divider so the
+   3-column block is closed on both sides. The rightmost border sits at
+   ≈316mm from the page-left, well inside the 420mm A3 sheet, so it is never
+   clipped on print/PDF output. */
+
+.a3-page .a3-footer {
+  flex-shrink: 0;
+  border-top: 2px solid #000;
+  padding-top: 2.5mm;
+  margin-top: 3mm;
+  text-align: center;
+  font-size: 11pt;
+  color: #000;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.a3-page .customer-block {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  padding: 3mm 0 3mm;
+  border-bottom: 1.5px solid #000;
+  position: relative;
+  background: #fff;
+  /* Block fills the now-narrower column. The column itself controls the right edge
+     of the bottom divider, customer-name underline and 特記 line. */
+}
+.a3-page .a3-col .customer-block:last-child { border-bottom: none; }
+
+/* Centered customer name */
+.a3-page .customer-block h4 {
+  margin: 0 0 1.5mm;
+  font-size: 17pt;
+  color: #000;
+  font-weight: 800;
+  text-align: center;
+  padding-bottom: 1mm;
+  border-bottom: 1px solid #000;
+  letter-spacing: 1px;
+  display: block;
+}
+
+/* Tiny date / id line under the name (optional) */
+.a3-page .customer-block .meta {
+  font-size: 9pt;
+  color: #555;
+  margin: 0 0 2mm;
+  text-align: center;
+  display: block;
+}
+
+/* Product list: 3-column grid → name | note | qty
+   `display: contents` on .product-row lets all rows share the same column tracks,
+   so names, notes and quantities line up across the whole customer block.
+   max-width keeps the qty column from being pushed to the far right edge,
+   so the gap between product name and quantity stays compact. */
+.a3-page .customer-block .product-list {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  column-gap: 4mm;
+  row-gap: 0.6mm;
+  margin-top: 1mm;
+  font-size: 12.5pt;
+  line-height: 1.3;
+  align-items: baseline;
+  /* Fills the block now that the column itself is narrow. The qty sits near the
+     block's right edge, and the column's right border (≈4mm beyond) is the next
+     visible black line, giving a small breathing space between qty and divider. */
+}
+.a3-page .customer-block .product-row { display: contents; }
+.a3-page .customer-block .product-row .name {
+  font-weight: 800;          /* product name: dominant */
+  letter-spacing: 0.3px;
+  color: #000;
+  padding: 0.4mm 0;
+}
+.a3-page .customer-block .product-row .note {
+  font-size: 10.5pt;          /* smaller than product name, still readable */
+  color: #b22424;             /* dark red so notes are easy to notice */
+  font-weight: 700;           /* slightly bold for stronger visibility */
+  white-space: nowrap;
+  padding: 0.4mm 0;
+}
+.a3-page .customer-block .product-row .qty {
+  font-weight: 600;
+  text-align: right;
+  white-space: nowrap;
+  color: #000;
+  padding: 0.4mm 0;
+}
+
+/* Block-level special note (特記) — red, slightly bold, compact, no heavy backgrounds */
+.a3-page .customer-block .note-line {
+  font-size: 10.5pt;
+  color: #b22424;
+  font-weight: 700;
+  margin-top: 2mm;
+  padding: 1mm 0 0;
+  text-align: left;
+  border-top: 1px dashed #b22424;
+  line-height: 1.3;
+}
+.a3-page .customer-block .note-line .note-label {
+  color: #b22424;
+  font-weight: 800;
+  margin-right: 1mm;
+}
+
+/* Hover affordance for click-to-edit on the split screen */
+.a3-page .customer-block.clickable { cursor: pointer; }
+.a3-page .customer-block.clickable:hover { background: #fff8e6; }
+.a3-page .customer-block.clickable::after {
+  content: "✎ クリックで編集";
+  position: absolute;
+  top: 1mm; right: 1mm;
+  font-size: 8pt;
+  color: #b0a060;
+  background: #fff8e6;
+  padding: 0.5mm 2mm;
+  border-radius: 1mm;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+.a3-page .customer-block.clickable:hover::after { opacity: 1; }
+.a3-page .customer-block.selected {
+  background: #fffaee;
+  outline: 3px solid #ffb300;
+  outline-offset: -3px;
+}
+
+/* ====== Edit modal ====== */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999;
+  padding: 24px;
+}
+.modal-backdrop[hidden] { display: none !important; }
+.modal {
+  background: #fff;
+  width: min(960px, 96vw);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+  overflow: hidden;
+}
+.modal-head {
+  background: #1f3a5f;
+  color: #fff;
+  padding: 14px 22px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-head h3 { font-size: 18px; font-weight: 700; margin: 0; }
+.modal-close-btn {
+  background: rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255,255,255,0.4);
+  color: #fff;
+}
+.modal-close-btn:hover { background: rgba(255,255,255,0.28); }
+.modal-body {
+  padding: 22px;
+  overflow: auto;
+}
+.modal-foot {
+  padding: 14px 22px;
+  border-top: 1px solid #e5ebf3;
+  display: flex; justify-content: flex-end; gap: 12px;
+  background: #f7f9fc;
+}
+
+/* ====== Toast ====== */
+.toast {
+  position: fixed;
+  bottom: 30px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #1f3a5f;
+  color: #fff;
+  padding: 12px 22px;
+  border-radius: 8px;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s;
+  z-index: 9999;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ====== Print ====== */
+@media print {
+  /* A3 landscape, no browser-added margin (page padding inside .a3-page provides safe area) */
+  @page {
+    size: A3 landscape;
+    margin: 0;
+  }
+
+  /* Preserve background colors (table headers, borders, footer) */
+  html, body, .a3-page, .a3-page *, .customer-block, .customer-block * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    width: auto !important;
+    height: auto !important;
+  }
+  .app-main { max-width: none !important; padding: 0 !important; margin: 0 !important; }
+
+  /* Hide every UI chrome — only the A3 sheet should print */
+  .app-header,
+  .main-nav,
+  .no-print,
+  .toast,
+  .screen-head,
+  .print-controls,
+  .split-toolbar,
+  .ocr-controls,
+  .split-controls,
+  .quick-actions,
+  .stats,
+  .upload-zone,
+  #uploadedListCard,
+  #screen-dashboard,
+  #screen-upload,
+  #screen-ocr,
+  #screen-split { display: none !important; }
+
+  /* Show only the print preview screen */
+  #screen-print { display: block !important; }
+  #screen-print > .screen-head,
+  #screen-print > .print-controls { display: none !important; }
+
+  /* Page container — strip on-screen scaffolding */
+  .a3-pages, .a3-pages-inline {
+    gap: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    transform: none !important;
+    zoom: 1 !important;
+    display: block !important;
+  }
+
+  /* Each .a3-page = exactly one printed sheet (420×297mm with internal padding for safe area) */
+  .a3-page {
+    width: 420mm !important;
+    height: 297mm !important;
+    padding: 14mm 16mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+    /* Force a new sheet between pages */
+    break-after: page;
+    page-break-after: always;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    overflow: hidden;
+  }
+  .a3-page:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  /* Customer blocks must never split across pages */
+  .customer-block {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Hide all click-to-edit affordances in print */
+  .customer-block.clickable { cursor: default !important; }
+  .customer-block.clickable::after { display: none !important; }
+  .customer-block.selected {
+    outline: none !important;
+    background: #fff !important;
+  }
+  .customer-block.clickable:hover { background: #fff !important; }
+
+  /* Force red on notes so they are still red in print/PDF
+     (some browsers strip colored text without these rules) */
+  .a3-page .customer-block .product-row .note,
+  .a3-page .customer-block .note-line,
+  .a3-page .customer-block .note-line .note-label {
+    color: #b22424 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide modal if it happens to be open when print is triggered */
+  .modal-backdrop { display: none !important; }
+}

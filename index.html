@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>東西青果 FAX注文処理システム（試作版）</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="app-header" id="appHeader">
+  <div class="brand">
+    <div class="logo">東西</div>
+    <div>
+      <h1>東西青果 FAX注文処理システム</h1>
+      <p class="tag">Phase 1 プロトタイプ ／ 試作版</p>
+    </div>
+  </div>
+  <nav class="main-nav">
+    <button class="nav-btn active" data-screen="dashboard">ダッシュボード</button>
+    <button class="nav-btn" data-screen="upload">FAXアップロード</button>
+    <button class="nav-btn" data-screen="ocr">OCR確認・編集</button>
+    <button class="nav-btn" data-screen="split">突合せ画面</button>
+    <button class="nav-btn" data-screen="print">A3印刷プレビュー</button>
+  </nav>
+</header>
+
+<main class="app-main">
+
+  <!-- ============== DASHBOARD ============== -->
+  <section class="screen active" id="screen-dashboard">
+    <div class="screen-head">
+      <h2>ダッシュボード</h2>
+      <p>本日のFAX注文の状況を確認します。</p>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card stat-blue">
+        <div class="stat-label">本日のFAX件数</div>
+        <div class="stat-value" id="statTotal">0</div>
+        <div class="stat-sub">受信済み</div>
+      </div>
+      <div class="stat-card stat-amber">
+        <div class="stat-label">未確認</div>
+        <div class="stat-value" id="statPending">0</div>
+        <div class="stat-sub">要レビュー</div>
+      </div>
+      <div class="stat-card stat-green">
+        <div class="stat-label">確認済み</div>
+        <div class="stat-value" id="statChecked">0</div>
+        <div class="stat-sub">A3印刷可</div>
+      </div>
+      <div class="stat-card stat-purple">
+        <div class="stat-label">本日の合計品目数</div>
+        <div class="stat-value" id="statItems">0</div>
+        <div class="stat-sub">全顧客合計</div>
+      </div>
+    </div>
+
+    <div class="quick-actions">
+      <button class="btn btn-primary btn-xl" data-goto="upload">＋ 新しいFAXをアップロード</button>
+      <button class="btn btn-secondary btn-xl" data-goto="print">本日のA3シートを印刷</button>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>本日のFAX一覧</h3>
+        <span class="muted">クリックで OCR確認・編集 へ</span>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>受信時刻</th>
+            <th>顧客名</th>
+            <th>品目数</th>
+            <th>納品日</th>
+            <th>状態</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="dashboardList"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============== UPLOAD ============== -->
+  <section class="screen" id="screen-upload">
+    <div class="screen-head">
+      <h2>FAXアップロード</h2>
+      <p>スキャンしたFAX画像（JPEG/PNG）またはPDFをアップロードしてください。</p>
+    </div>
+
+    <div class="upload-zone" id="uploadZone">
+      <div class="upload-icon">📠</div>
+      <div class="upload-title">ここにファイルをドラッグ＆ドロップ</div>
+      <div class="upload-sub">または下のボタンからファイルを選択</div>
+      <input type="file" id="fileInput" accept="image/*,application/pdf" multiple style="display:none">
+      <button class="btn btn-primary btn-xl" id="selectFileBtn">ファイルを選択</button>
+      <div class="upload-hint">※ 試作版のため、選択されたファイルはサンプルOCR結果に置き換えられます。</div>
+    </div>
+
+    <div class="card" id="uploadedListCard" style="display:none">
+      <div class="card-head"><h3>アップロード済みファイル</h3></div>
+      <ul class="file-list" id="uploadedList"></ul>
+      <div class="action-row">
+        <button class="btn btn-success btn-xl" id="runOcrBtn">▶ 模擬OCRを実行</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== OCR REVIEW ============== -->
+  <section class="screen" id="screen-ocr">
+    <div class="screen-head">
+      <h2>OCR結果の確認・編集</h2>
+      <p>抽出された注文内容を確認し、必要に応じて修正してください。</p>
+    </div>
+
+    <div class="ocr-controls">
+      <label class="field">
+        <span>編集対象のFAX</span>
+        <select id="ocrOrderSelect"></select>
+      </label>
+      <div class="badge-area">
+        <span class="badge badge-amber" id="ocrStatusBadge">未確認</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h3>顧客情報</h3></div>
+      <div class="form-grid">
+        <label class="field">
+          <span>顧客名</span>
+          <input type="text" id="editCustomer">
+        </label>
+        <label class="field">
+          <span>受注日</span>
+          <input type="date" id="editOrderDate">
+        </label>
+        <label class="field">
+          <span>納品日</span>
+          <input type="date" id="editDeliveryDate">
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>注文品目</h3>
+        <button class="btn btn-secondary" id="addItemBtn">＋ 品目を追加</button>
+      </div>
+      <table class="data-table editable" id="ocrItemTable">
+        <thead>
+          <tr>
+            <th style="width:34%">品名</th>
+            <th style="width:14%">数量</th>
+            <th style="width:14%">単位</th>
+            <th>備考</th>
+            <th style="width:8%">削除</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="action-row">
+      <button class="btn btn-secondary btn-xl" id="saveOcrBtn">💾 修正を保存</button>
+      <button class="btn btn-success btn-xl" id="markCheckedBtn">✓ 確認済みにする</button>
+      <button class="btn btn-primary btn-xl" data-goto="split">突合せ画面へ →</button>
+    </div>
+  </section>
+
+  <!-- ============== SPLIT VIEW ============== -->
+  <section class="screen" id="screen-split">
+    <div class="screen-head">
+      <h2>突合せ画面（FAX原本 ⇔ A3注文書）</h2>
+      <p>左の原本FAXと右のA3注文書を見比べ、修正が必要な場合は<strong>右側の顧客ブロックをクリック</strong>して編集してください。</p>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="split-toolbar">
+      <div class="toolbar-row">
+        <label class="field field-lg">
+          <span>選択中のFAX</span>
+          <select id="splitOrderSelect"></select>
+        </label>
+        <div class="status-area">
+          <span class="status-label">現在の状態：</span>
+          <span class="badge badge-lg" id="splitStatusBadge">未確認</span>
+        </div>
+      </div>
+      <div class="toolbar-row">
+        <button class="btn btn-secondary btn-xl" id="splitSaveBtn">💾 修正を保存</button>
+        <button class="btn btn-warning btn-xl" id="splitNeedsCorrBtn">⚠ 要修正にする</button>
+        <button class="btn btn-success btn-xl" id="splitCheckedBtn">✓ 確認済みにする</button>
+        <button class="btn btn-info btn-xl" id="splitReadyBtn">📋 印刷待ちにする</button>
+        <span class="toolbar-spacer"></span>
+        <button class="btn btn-primary btn-xl" id="splitPrintBtn">🖨 A3を印刷</button>
+        <button class="btn btn-secondary btn-xl" id="splitExportBtn">⬇ PDFで保存</button>
+        <button class="btn btn-secondary btn-xl" data-goto="upload">← アップロードに戻る</button>
+      </div>
+    </div>
+
+    <div class="split-view">
+      <!-- LEFT: original fax with zoom / rotate / page nav -->
+      <div class="split-pane">
+        <div class="pane-head">
+          <span>原本FAX</span>
+          <span class="pane-head-info" id="faxHeadInfo"></span>
+        </div>
+        <div class="fax-toolbar">
+          <button class="iconbtn" id="faxZoomOut" title="縮小">−</button>
+          <span class="zoom-label" id="faxZoomLabel">100%</span>
+          <button class="iconbtn" id="faxZoomIn" title="拡大">＋</button>
+          <button class="iconbtn" id="faxRotate" title="90°回転">⟳</button>
+          <button class="iconbtn" id="faxFit" title="表示リセット">↺</button>
+          <span class="toolbar-spacer"></span>
+          <button class="iconbtn" id="faxPrev" title="前ページ">◀</button>
+          <span class="page-label" id="faxPageLabel">1 / 1</span>
+          <button class="iconbtn" id="faxNext" title="次ページ">▶</button>
+        </div>
+        <div class="pane-body fax-pane">
+          <div class="fax-viewport">
+            <div class="fax-canvas" id="faxCanvas"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: full multi-page A3 (editable) -->
+      <div class="split-pane">
+        <div class="pane-head">
+          <span>A3注文書（クリックで編集）</span>
+          <span class="pane-head-info" id="a3HeadInfo"></span>
+        </div>
+        <div class="a3-pane-toolbar">
+          <button class="iconbtn" id="a3ZoomOut" title="縮小">−</button>
+          <span class="zoom-label" id="a3ZoomLabel">55%</span>
+          <button class="iconbtn" id="a3ZoomIn" title="拡大">＋</button>
+          <span class="toolbar-spacer"></span>
+          <span class="muted">顧客ブロックをクリックすると編集できます</span>
+        </div>
+        <div class="pane-body a3-pane">
+          <div id="splitA3Pages" class="a3-pages-inline"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== PRINT PREVIEW ============== -->
+  <section class="screen" id="screen-print">
+    <div class="screen-head no-print">
+      <h2>A3 印刷プレビュー</h2>
+      <p>A3横向き。顧客ごとにまとめ、空白を最小化して次の顧客を配置します。1枚に収まらない場合は次のA3ページへ。</p>
+    </div>
+
+    <div class="print-controls no-print">
+      <label class="field">
+        <span>印刷対象</span>
+        <select id="printScopeSelect">
+          <option value="checked">確認済みのみ</option>
+          <option value="all" selected>本日の全FAX</option>
+        </select>
+      </label>
+      <div class="action-row inline">
+        <button class="btn btn-primary btn-xl" id="printBtn">🖨 印刷</button>
+        <button class="btn btn-secondary btn-xl" id="exportPdfBtn">⬇ PDFとして保存</button>
+      </div>
+    </div>
+
+    <div id="a3Pages" class="a3-pages"></div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<!-- Edit modal: opens when a customer block is clicked on the split screen -->
+<div class="modal-backdrop" id="editModalBackdrop" hidden>
+  <div class="modal" role="dialog" aria-labelledby="editModalTitle" aria-modal="true">
+    <div class="modal-head">
+      <h3 id="editModalTitle">注文内容を編集</h3>
+      <button class="iconbtn modal-close-btn" id="editModalClose" title="閉じる">✕</button>
+    </div>
+    <div class="modal-body" id="editModalBody"></div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary btn-xl" id="editModalCancel">キャンセル</button>
+      <button class="btn btn-primary btn-xl" id="editModalSave">💾 保存して閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

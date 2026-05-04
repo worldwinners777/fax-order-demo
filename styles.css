@@ -287,10 +287,11 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   box-shadow: 0 2px 8px rgba(20,40,80,0.06);
   overflow: hidden;
   display: flex; flex-direction: column;
-  /* Fill the viewport down to the bottom (≒ "blue line") so the right A3
-     pane gets its full vertical space; the inner pane-body scrolls. */
-  height: calc(100vh - 320px);
-  min-height: 760px;
+  /* Comparison area is intentionally tall — A4 fits its full height (no
+     vertical scroll); A3 also fits its full height and gets only a
+     horizontal scrollbar for the part that doesn't fit width-wise. */
+  height: calc(100vh - 200px);
+  min-height: 820px;
 }
 .pane-head {
   background: #1f3a5f;
@@ -313,7 +314,14 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
   overflow: auto;
 }
 .fax-pane { padding: 0; background: #2a3442; }
-.a3-pane  { padding: 18px; background: #d8dee7; }
+/* A3 right pane: vertical content fits the pane height (no vertical scroll);
+   horizontal overflow gets a scrollbar so the right edge can be checked. */
+.a3-pane  {
+  padding: 18px;
+  background: #d8dee7;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
 
 /* ====== Fax toolbar (zoom / rotate / page nav) ====== */
 .fax-toolbar, .a3-pane-toolbar {

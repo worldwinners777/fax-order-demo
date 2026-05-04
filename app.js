@@ -169,7 +169,9 @@ let currentScreen = "dashboard";
 let currentOcrId = orders[0].id;
 let currentSplitId = orders[0].id;
 let faxView = { zoom: 1.0, rotation: 0, page: 1 };
-let a3SplitZoom = 0.85;   // larger default — readable text, horizontal scroll for the right edge
+// null → auto "fit to pane height" (so A3 never scrolls vertically; only horizontal scroll
+// is possible). A number means the user set a manual zoom via the +/- buttons.
+let a3SplitZoom = null;
 
 const ITEMS_PER_FAX_PAGE = 6;
 function getFaxPageCount(order) {
@@ -487,18 +489,48 @@ document.getElementById("faxNext").addEventListener("click", () => navFaxPage(1)
 function currentOrder() { return orders.find(o => o.id === currentSplitId); }
 
 // ---------- A3 right-pane zoom ----------
+// Compute the zoom factor that makes the A3 page exactly fit the
+// available height of the .a3-pane (so the user never gets a vertical scrollbar).
+function computeFitZoom() {
+  const pane = document.querySelector("#screen-split .a3-pane");
+  if (!pane) return 0.85;
+  const cs = getComputedStyle(pane);
+  const padT = parseFloat(cs.paddingTop) || 0;
+  const padB = parseFloat(cs.paddingBottom) || 0;
+  const paneH = pane.clientHeight - padT - padB;
+  if (paneH <= 0) return 0.85;
+  // Measure 297mm in physical pixels (browser-dependent)
+  const ruler = document.createElement("div");
+  ruler.style.cssText = "position:absolute;left:-9999px;width:1mm;height:297mm;";
+  document.body.appendChild(ruler);
+  const a3H = ruler.getBoundingClientRect().height;
+  document.body.removeChild(ruler);
+  return Math.max(0.35, Math.min(1.5, paneH / a3H));
+}
+
 function applyA3Zoom() {
   const wrap = document.getElementById("splitA3Pages");
-  wrap.style.zoom = a3SplitZoom;
-  document.getElementById("a3ZoomLabel").textContent = `${Math.round(a3SplitZoom * 100)}%`;
+  if (!wrap) return;
+  const zoom = (a3SplitZoom == null) ? computeFitZoom() : a3SplitZoom;
+  wrap.style.zoom = zoom;
+  document.getElementById("a3ZoomLabel").textContent = `${Math.round(zoom * 100)}%`;
 }
+
 document.getElementById("a3ZoomIn").addEventListener("click", () => {
-  a3SplitZoom = Math.min(1.5, +(a3SplitZoom + 0.05).toFixed(2));   // wider zoom-in range
+  const cur = (a3SplitZoom == null) ? computeFitZoom() : a3SplitZoom;
+  a3SplitZoom = Math.min(1.5, +(cur + 0.05).toFixed(2));
   applyA3Zoom();
 });
 document.getElementById("a3ZoomOut").addEventListener("click", () => {
-  a3SplitZoom = Math.max(0.35, +(a3SplitZoom - 0.05).toFixed(2));
+  const cur = (a3SplitZoom == null) ? computeFitZoom() : a3SplitZoom;
+  a3SplitZoom = Math.max(0.35, +(cur - 0.05).toFixed(2));
   applyA3Zoom();
+});
+
+// Re-fit when the window resizes, but only while in auto mode so we don't
+// override a manual zoom the user has dialed in.
+window.addEventListener("resize", () => {
+  if (currentScreen === "split" && a3SplitZoom == null) applyA3Zoom();
 });
 
 // ---------- Status / save buttons on split toolbar ----------

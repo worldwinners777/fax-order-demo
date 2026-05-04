@@ -169,7 +169,7 @@ let currentScreen = "dashboard";
 let currentOcrId = orders[0].id;
 let currentSplitId = orders[0].id;
 let faxView = { zoom: 1.0, rotation: 0, page: 1 };
-let a3SplitZoom = 0.55;
+let a3SplitZoom = 0.85;   // larger default — readable text, horizontal scroll for the right edge
 
 const ITEMS_PER_FAX_PAGE = 6;
 function getFaxPageCount(order) {
@@ -493,7 +493,7 @@ function applyA3Zoom() {
   document.getElementById("a3ZoomLabel").textContent = `${Math.round(a3SplitZoom * 100)}%`;
 }
 document.getElementById("a3ZoomIn").addEventListener("click", () => {
-  a3SplitZoom = Math.min(1.0, +(a3SplitZoom + 0.05).toFixed(2));
+  a3SplitZoom = Math.min(1.5, +(a3SplitZoom + 0.05).toFixed(2));   // wider zoom-in range
   applyA3Zoom();
 });
 document.getElementById("a3ZoomOut").addEventListener("click", () => {

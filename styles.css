@@ -319,6 +319,75 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
 .ocr-controls .field, .split-controls .field, .print-controls .field { min-width: 280px; }
 .badge-area { margin-left: auto; }
 
+/* ====== OCR review screen — split layout (left FAX / right form) ====== */
+.ocr-toolbar {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(20,40,80,0.06);
+  padding: 14px 18px;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+
+.ocr-notice-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fff5f5;
+  border: 2px solid #c93030;
+  border-radius: 8px;
+  padding: 12px 18px;
+  margin-bottom: 16px;
+  color: #b22424;
+}
+.ocr-notice-banner .icon { font-size: 22px; }
+.ocr-notice-banner .content { flex: 1; }
+.ocr-notice-banner .label { font-weight: 800; margin-right: 8px; font-size: 15px; }
+.ocr-notice-banner .text { font-size: 14px; line-height: 1.5; }
+
+.ocr-split-view {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 1280px) {
+  .ocr-split-view { grid-template-columns: 1fr; }
+}
+.ocr-split-view .split-pane {
+  height: calc(100vh - 280px);
+  min-height: 700px;
+}
+.ocr-form-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: calc(100vh - 280px);
+  min-height: 700px;
+  overflow-y: auto;
+  padding-right: 4px;            /* room for scrollbar so the form doesn't shift */
+}
+.ocr-form-pane .card { flex-shrink: 0; }
+
+/* OCR fax viewport — same look as split screen but its own scope */
+.ocr-fax-viewport { background: #2a3442; }
+
+/* Revision history list */
+.history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.history-list li {
+  padding: 10px 18px;
+  border-bottom: 1px solid #eef1f6;
+  display: flex; gap: 14px; flex-wrap: wrap;
+  font-size: 14px;
+}
+.history-list li:last-child { border-bottom: none; }
+.history-list .hist-time   { font-weight: 700; color: #1f3a5f; min-width: 130px; }
+.history-list .hist-by     { color: #5a6a80; min-width: 60px; }
+.history-list .hist-reason { color: #b22424; flex: 1; }
+
 /* ====== Split toolbar ====== */
 .split-toolbar {
   background: #fff;
@@ -731,9 +800,15 @@ input, select, textarea { font-family: inherit; font-size: 1rem; }
 }
 .a3-page .customer-block.clickable:hover::after { opacity: 1; }
 .a3-page .customer-block.selected {
-  background: #fffaee;
-  outline: 3px solid #ffb300;
-  outline-offset: -3px;
+  background: #fff3cf;
+  outline: 4px solid #ff9500;
+  outline-offset: -2px;
+  box-shadow: 0 0 14px rgba(255, 149, 0, 0.45);
+  z-index: 1;
+  position: relative;
+}
+.a3-page .customer-block.selected h4 {
+  color: #b25e00;
 }
 
 /* ====== Edit modal ====== */

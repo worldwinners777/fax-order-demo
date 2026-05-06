@@ -549,6 +549,8 @@ let currentScreen = "dashboard";
 let currentOcrId = orders[0].id;
 let currentSplitId = orders[0].id;
 let faxView = { zoom: 1.0, rotation: 0, page: 1 };
+// OCR review screen has its own independent fax view state.
+let ocrFaxView = { zoom: 1.0, rotation: 0, page: 1 };
 
 // Delivery-date filter shared across screens. "all" = show every order;
 // otherwise an ISO date string like "2026-06-01" filters to that delivery day.
@@ -557,6 +559,11 @@ let currentDeliveryFilter = "all";
 // A3 column layout: 5 (default — readable) or 6 (denser). Switched via the
 // toggle on the A3 print-preview screen.
 let currentColumnLayout = 5;
+
+// Cached A3 page count from the most recent paginateAndRender on the split
+// screen. Used by updateSelectedFax so partial updates can refresh the
+// "選択中：xxx ／ N件の顧客 / M ページ" header without re-running pagination.
+let lastA3PageCount = 0;
 
 function deliveryFilterValues() {
   // Unique sorted delivery dates present in current orders.
@@ -769,27 +776,165 @@ function renderOcr() {
   sel.innerHTML = "";
   orders.forEach(o => {
     const opt = document.createElement("option");
+    const flag = o.status === "needs_correction" ? "⚠ " : "";
     opt.value = o.id;
-    opt.textContent = `${o.id} ／ ${o.customer} （${o.items.length}品目）`;
+    opt.textContent = `${flag}${o.id} ／ ${o.customer} （${o.items.length}品目 / ${STATUS[o.status].label}）`;
     sel.appendChild(opt);
   });
   sel.value = currentOcrId;
-  sel.onchange = () => { currentOcrId = sel.value; renderOcr(); };
+  sel.onchange = () => {
+    currentOcrId = sel.value;
+    ocrFaxView = { zoom: 1.0, rotation: 0, page: 1 };
+    renderOcr();
+  };
 
   const order = orders.find(o => o.id === currentOcrId);
+  if (!order) return;
+
+  // Form fields
   document.getElementById("editCustomer").value = order.customer;
   document.getElementById("editOrderDate").value = order.orderDate;
   document.getElementById("editDeliveryDate").value = order.deliveryDate;
 
+  // Status badge
   const badge = document.getElementById("ocrStatusBadge");
   const s = STATUS[order.status] || STATUS.unchecked;
-  badge.className = `badge ${s.cls}`;
+  badge.className = `badge badge-lg ${s.cls}`;
   badge.textContent = s.label;
   if (order._ocrNotice) badge.title = order._ocrNotice;
+  else badge.removeAttribute("title");
 
+  // 要確認理由 banner — derives reasons from _ocrNotice + item-level flags
+  const banner = document.getElementById("ocrNoticeBanner");
+  const reasons = collectReviewReasons(order);
+  if (reasons.length > 0) {
+    banner.style.display = "";
+    document.getElementById("ocrNoticeText").innerHTML = reasons.map(escapeHtml).join("　/　");
+  } else {
+    banner.style.display = "none";
+  }
+
+  // Left FAX preview
+  document.getElementById("ocrFaxHeadInfo").textContent =
+    `${order.id} ／ ${order.customer} ／ 受信 ${order.receivedAt}`;
+  renderOcrFaxCanvas(order);
+
+  // Item table
   const tbody = document.querySelector("#ocrItemTable tbody");
   tbody.innerHTML = "";
   order.items.forEach((it, idx) => tbody.appendChild(makeOcrRow(order, it, idx)));
+
+  // Revision history list
+  renderRevisionHistory(order);
+}
+
+// Derive a list of human-readable "要確認理由" strings from the order's
+// OCR notice + per-item issue flags. Used by the banner at the top.
+function collectReviewReasons(order) {
+  const reasons = [];
+  if (order._ocrNotice) reasons.push(order._ocrNotice);
+  if (!order.customer || !order.customer.trim()) reasons.push("顧客名不明");
+  if (!order.deliveryDate) reasons.push("配達日不明");
+  for (const it of (order.items || [])) {
+    if (it.qty === 0 || it.qty == null || isNaN(it.qty)) {
+      if (!reasons.some(r => r.includes("数量"))) reasons.push("数量不明の品目あり");
+    }
+    if (!it.name || !it.name.trim() || it.name.includes("品名不明") || it.name.includes("読取不可")) {
+      if (!reasons.some(r => r.includes("品名") || r.includes("商品名"))) reasons.push("品名不明の品目あり");
+    }
+    if (it.notes && (it.notes.includes("単位要確認") || it.notes.includes("単位不明"))) {
+      if (!reasons.some(r => r.includes("単位"))) reasons.push("単位要確認の品目あり");
+    }
+  }
+  return reasons;
+}
+
+function renderOcrFaxCanvas(order) {
+  const canvas = document.getElementById("ocrFaxCanvas");
+  if (!canvas) return;
+  const totalPages = getFaxPageCount(order);
+  if (ocrFaxView.page > totalPages) ocrFaxView.page = totalPages;
+  canvas.innerHTML = makeFaxSvg(order, ocrFaxView.page);
+  canvas.style.transform = `rotate(${ocrFaxView.rotation}deg) scale(${ocrFaxView.zoom})`;
+  document.getElementById("ocrFaxZoomLabel").textContent = `${Math.round(ocrFaxView.zoom * 100)}%`;
+  document.getElementById("ocrFaxPageLabel").textContent = `P.${ocrFaxView.page} / ${totalPages}`;
+  document.getElementById("ocrFaxPrev").disabled = ocrFaxView.page <= 1;
+  document.getElementById("ocrFaxNext").disabled = ocrFaxView.page >= totalPages;
+}
+
+// OCR FAX toolbar — wired once at load time
+document.getElementById("ocrFaxZoomIn").addEventListener("click", () => {
+  ocrFaxView.zoom = Math.min(3.0, +(ocrFaxView.zoom + 0.25).toFixed(2));
+  const o = orders.find(o => o.id === currentOcrId);
+  if (o) renderOcrFaxCanvas(o);
+});
+document.getElementById("ocrFaxZoomOut").addEventListener("click", () => {
+  ocrFaxView.zoom = Math.max(0.5, +(ocrFaxView.zoom - 0.25).toFixed(2));
+  const o = orders.find(o => o.id === currentOcrId);
+  if (o) renderOcrFaxCanvas(o);
+});
+document.getElementById("ocrFaxRotate").addEventListener("click", () => {
+  ocrFaxView.rotation = (ocrFaxView.rotation + 90) % 360;
+  const o = orders.find(o => o.id === currentOcrId);
+  if (o) renderOcrFaxCanvas(o);
+});
+document.getElementById("ocrFaxFit").addEventListener("click", () => {
+  ocrFaxView = { zoom: 1.0, rotation: 0, page: ocrFaxView.page };
+  const o = orders.find(o => o.id === currentOcrId);
+  if (o) renderOcrFaxCanvas(o);
+});
+document.getElementById("ocrFaxPrev").addEventListener("click", () => {
+  if (ocrFaxView.page > 1) {
+    ocrFaxView.page--;
+    const o = orders.find(o => o.id === currentOcrId);
+    if (o) renderOcrFaxCanvas(o);
+  }
+});
+document.getElementById("ocrFaxNext").addEventListener("click", () => {
+  const o = orders.find(o => o.id === currentOcrId);
+  if (!o) return;
+  if (ocrFaxView.page < getFaxPageCount(o)) {
+    ocrFaxView.page++;
+    renderOcrFaxCanvas(o);
+  }
+});
+
+// Revision history — one entry per save.
+// Phase 1: in-memory only. Designed to be Phase-2 ready (timestamp / user / reason).
+function pushRevision(order, reason) {
+  if (!order.revisions) order.revisions = [];
+  order.revisions.push({
+    at: new Date().toISOString(),
+    by: "staff",                       // Phase 2: real user identity
+    reason: reason || (order._ocrNotice || "ユーザー編集"),
+    snapshot: {
+      customer: order.customer,
+      orderDate: order.orderDate,
+      deliveryDate: order.deliveryDate,
+      status: order.status,
+      items: JSON.parse(JSON.stringify(order.items || []))
+    }
+  });
+}
+
+function renderRevisionHistory(order) {
+  const card = document.getElementById("ocrHistoryCard");
+  const list = document.getElementById("ocrHistoryList");
+  const revs = order.revisions || [];
+  if (revs.length === 0) {
+    card.style.display = "none";
+    return;
+  }
+  card.style.display = "";
+  list.innerHTML = revs.slice().reverse().map(r => {
+    const d = new Date(r.at);
+    const time = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+    return `<li>
+      <span class="hist-time">${escapeHtml(time)}</span>
+      <span class="hist-by">${escapeHtml(r.by || "")}</span>
+      <span class="hist-reason">${escapeHtml(r.reason || "")}</span>
+    </li>`;
+  }).join("");
 }
 function makeOcrRow(order, it, idx) {
   const tr = document.createElement("tr");
@@ -831,12 +976,16 @@ document.getElementById("addItemBtn").addEventListener("click", () => {
 });
 document.getElementById("saveOcrBtn").addEventListener("click", () => {
   collectOcrFromForm();
+  const order = orders.find(o => o.id === currentOcrId);
+  pushRevision(order, "修正保存");
   toast("修正を保存しました");
+  renderOcr();
 });
 document.getElementById("markCheckedBtn").addEventListener("click", () => {
   collectOcrFromForm();
   const order = orders.find(o => o.id === currentOcrId);
   order.status = "checked";
+  pushRevision(order, "確認済みに変更");
   toast("確認済みにしました");
   renderOcr();
 });
@@ -880,7 +1029,7 @@ function renderSplit() {
   // Pane head info — position within the FILTERED list so the count matches the dropdown.
   const faxIndex = visibleOrders.findIndex(o => o.id === currentSplitId);
   document.getElementById("faxHeadInfo").textContent =
-    `FAX ${faxIndex + 1} / ${visibleOrders.length}　・　${order.id} ／ ${order.customer} ／ 受信 ${order.receivedAt}`;
+    `表示中FAX：${order.id} ／ ${order.customer} ／ 受信 ${order.receivedAt}　（${faxIndex + 1}/${visibleOrders.length}）`;
   const a3HeadInfo = document.getElementById("a3HeadInfo");
 
   // Toolbar status badge
@@ -900,7 +1049,10 @@ function renderSplit() {
     selectedId: currentSplitId,
     primaryDate: order && order.deliveryDate    // title follows the currently selected fax
   });
-  a3HeadInfo.textContent = `${visibleOrders.length} 件の顧客 / ${pageCount} ページ`;
+  a3HeadInfo.textContent =
+    `選択中：${order.customer}　・　${visibleOrders.length} 件の顧客 / ${pageCount} ページ`;
+  // Cache for partial updates (updateSelectedFax) so we don't lose the page count
+  lastA3PageCount = pageCount;
 
   applyA3Zoom();
 
@@ -1031,6 +1183,14 @@ function setStatus(orderId, status, msg) {
   toast(msg);
   renderSplit();
 }
+// Explicit edit button — opens the modal for the currently selected customer,
+// no matter how many times it's clicked. Useful when staff have already chosen
+// a customer via A3 selection and just want to start editing.
+document.getElementById("splitEditBtn").addEventListener("click", () => {
+  if (currentSplitId) openEditModal(currentSplitId);
+  else toast("先にA3で顧客ブロックを選択してください");
+});
+
 document.getElementById("splitSaveBtn").addEventListener("click", () => toast("修正を保存しました"));
 document.getElementById("splitNeedsCorrBtn").addEventListener("click", () =>
   setStatus(currentSplitId, "needs_correction", "「要修正」に設定しました"));
@@ -1515,12 +1675,19 @@ function updateSelectedFax(orderId) {
   // Left pane: redraw the FAX SVG + reset its zoom/rotation/page
   renderFaxCanvas(order);
 
-  // Pane head info (FAX X / N ・ FX-NNNN ／ 顧客名 ／ 受信時刻)
+  // Pane head info — clearly labelled "表示中FAX：..." so staff can see
+  // at a glance which customer's FAX is currently in the left pane.
   const idx = list.findIndex(o => o.id === orderId);
   const faxHead = document.getElementById("faxHeadInfo");
   if (faxHead) {
     faxHead.textContent =
-      `FAX ${idx + 1} / ${list.length}　・　${order.id} ／ ${order.customer} ／ 受信 ${order.receivedAt}`;
+      `表示中FAX：${order.id} ／ ${order.customer} ／ 受信 ${order.receivedAt}　（${idx + 1}/${list.length}）`;
+  }
+  // Right-pane head: "選択中：xxx" stays in sync with the selected block
+  const a3Head = document.getElementById("a3HeadInfo");
+  if (a3Head) {
+    a3Head.textContent =
+      `選択中：${order.customer}　・　${list.length} 件の顧客 / ${lastA3PageCount || "?"} ページ`;
   }
 
   // Toolbar status badge follows the selected customer
@@ -1548,15 +1715,36 @@ function updateSelectedFax(orderId) {
   }
 }
 
+// Click delegation for A3 customer blocks.
+//
+// Bound EXACTLY ONCE per container element so that re-renders do not stack up
+// duplicate listeners. (Old bug: paginateAndRender ran bindClickToEdit on every
+// render, so after switching datasets / saving / re-navigating, multiple
+// listeners fired per click — the first one updated `currentSplitId`, then a
+// later listener saw `orderId === currentSplitId` and opened the edit modal
+// immediately. This made the 2-step click silently break for 100/150/180-item
+// test datasets and any 6/30 dataset entered after them.)
+//
+// Now: a single listener uses event delegation against `e.target.closest(...)`.
+// New customer blocks injected via innerHTML replacement are caught by the
+// same listener — no rebinding needed.
+const _clickBoundContainers = new WeakSet();
 function bindClickToEdit(rootEl) {
+  if (!rootEl || _clickBoundContainers.has(rootEl)) return;
+  _clickBoundContainers.add(rootEl);
   rootEl.addEventListener("click", (e) => {
     const block = e.target.closest(".customer-block.clickable");
     if (!block) return;
     const orderId = block.dataset.orderId;
-    // 1) Sync the left FAX preview to the clicked customer (no full re-render → A3 scroll preserved)
-    updateSelectedFax(orderId);
-    // 2) Open the edit modal for that customer
-    openEditModal(orderId);
+    if (orderId === currentSplitId) {
+      // 2nd click on the already-selected block → open edit modal
+      openEditModal(orderId);
+    } else {
+      // 1st click on a different customer → just switch selection + left FAX.
+      // Modal is NOT opened — staff compares A3 vs FAX first, then clicks
+      // the same block again (or the explicit edit button) to start editing.
+      updateSelectedFax(orderId);
+    }
   });
 }
 

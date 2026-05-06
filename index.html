@@ -147,60 +147,107 @@
   <section class="screen" id="screen-ocr">
     <div class="screen-head">
       <h2>OCR結果の確認・編集</h2>
-      <p>抽出された注文内容を確認し、必要に応じて修正してください。</p>
+      <p>左側の原本FAXを見ながら、右側でOCR結果を確認・修正してください。</p>
     </div>
 
-    <div class="ocr-controls">
-      <label class="field">
+    <div class="ocr-toolbar">
+      <label class="field field-lg">
         <span>編集対象のFAX</span>
         <select id="ocrOrderSelect"></select>
       </label>
-      <div class="badge-area">
-        <span class="badge badge-amber" id="ocrStatusBadge">未確認</span>
+      <div class="status-area">
+        <span class="status-label">現在の状態：</span>
+        <span class="badge badge-lg" id="ocrStatusBadge">未確認</span>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-head"><h3>顧客情報</h3></div>
-      <div class="form-grid">
-        <label class="field">
-          <span>顧客名</span>
-          <input type="text" id="editCustomer">
-        </label>
-        <label class="field">
-          <span>受注日</span>
-          <input type="date" id="editOrderDate">
-        </label>
-        <label class="field">
-          <span>納品日</span>
-          <input type="date" id="editDeliveryDate">
-        </label>
+    <!-- 要確認理由 banner (only shown for needs_correction orders) -->
+    <div class="ocr-notice-banner" id="ocrNoticeBanner" style="display:none">
+      <span class="icon">⚠</span>
+      <div class="content">
+        <span class="label">要確認理由：</span>
+        <span class="text" id="ocrNoticeText"></span>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-head">
-        <h3>注文品目</h3>
-        <button class="btn btn-secondary" id="addItemBtn">＋ 品目を追加</button>
+    <div class="ocr-split-view">
+      <!-- LEFT: original FAX -->
+      <div class="split-pane">
+        <div class="pane-head">
+          <span>原本FAX</span>
+          <span class="pane-head-info" id="ocrFaxHeadInfo"></span>
+        </div>
+        <div class="fax-toolbar">
+          <button class="iconbtn" id="ocrFaxZoomOut" title="縮小">−</button>
+          <span class="zoom-label" id="ocrFaxZoomLabel">100%</span>
+          <button class="iconbtn" id="ocrFaxZoomIn" title="拡大">＋</button>
+          <button class="iconbtn" id="ocrFaxRotate" title="90°回転">⟳</button>
+          <button class="iconbtn" id="ocrFaxFit" title="表示リセット">↺</button>
+          <span class="toolbar-spacer"></span>
+          <button class="iconbtn" id="ocrFaxPrev" title="前ページ">◀</button>
+          <span class="page-label" id="ocrFaxPageLabel">1 / 1</span>
+          <button class="iconbtn" id="ocrFaxNext" title="次ページ">▶</button>
+        </div>
+        <div class="pane-body fax-pane">
+          <div class="fax-viewport ocr-fax-viewport">
+            <div class="fax-canvas" id="ocrFaxCanvas"></div>
+          </div>
+        </div>
       </div>
-      <table class="data-table editable" id="ocrItemTable">
-        <thead>
-          <tr>
-            <th style="width:34%">品名</th>
-            <th style="width:14%">数量</th>
-            <th style="width:14%">単位</th>
-            <th>備考</th>
-            <th style="width:8%">削除</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
 
-    <div class="action-row">
-      <button class="btn btn-secondary btn-xl" id="saveOcrBtn">💾 修正を保存</button>
-      <button class="btn btn-success btn-xl" id="markCheckedBtn">✓ 確認済みにする</button>
-      <button class="btn btn-primary btn-xl" data-goto="split">突合せ画面へ →</button>
+      <!-- RIGHT: edit form -->
+      <div class="ocr-form-pane">
+        <div class="card">
+          <div class="card-head"><h3>顧客情報</h3></div>
+          <div class="form-grid">
+            <label class="field">
+              <span>顧客名</span>
+              <input type="text" id="editCustomer">
+            </label>
+            <label class="field">
+              <span>受注日</span>
+              <input type="date" id="editOrderDate">
+            </label>
+            <label class="field">
+              <span>納品日</span>
+              <input type="date" id="editDeliveryDate">
+            </label>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>注文品目</h3>
+            <button class="btn btn-secondary" id="addItemBtn">＋ 品目を追加</button>
+          </div>
+          <table class="data-table editable" id="ocrItemTable">
+            <thead>
+              <tr>
+                <th style="width:32%">品名</th>
+                <th style="width:14%">数量</th>
+                <th style="width:14%">単位</th>
+                <th>備考</th>
+                <th style="width:8%">削除</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="card" id="ocrHistoryCard" style="display:none">
+          <div class="card-head">
+            <h3>修正履歴</h3>
+            <span class="muted">修正日時 / 修正者 / 理由</span>
+          </div>
+          <ul class="history-list" id="ocrHistoryList"></ul>
+        </div>
+
+        <div class="action-row">
+          <button class="btn btn-secondary btn-xl" id="saveOcrBtn">💾 修正を保存</button>
+          <button class="btn btn-success btn-xl" id="markCheckedBtn">✓ 確認済みにする</button>
+          <button class="btn btn-primary btn-xl" data-goto="split">突合せ画面へ →</button>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -223,6 +270,7 @@
           <span>選択中のFAX</span>
           <select id="splitOrderSelect"></select>
         </label>
+        <button class="btn btn-warning btn-xl" id="splitEditBtn">✎ 選択中の顧客を編集</button>
         <div class="status-area">
           <span class="status-label">現在の状態：</span>
           <span class="badge badge-lg" id="splitStatusBadge">未確認</span>
@@ -276,7 +324,7 @@
           <span class="zoom-label" id="a3ZoomLabel">55%</span>
           <button class="iconbtn" id="a3ZoomIn" title="拡大">＋</button>
           <span class="toolbar-spacer"></span>
-          <span class="muted">顧客ブロックをクリックすると編集できます</span>
+          <span class="muted">クリックで選択 ／ 選択中のブロックを再度クリックで編集</span>
         </div>
         <div class="pane-body a3-pane">
           <div id="splitA3Pages" class="a3-pages-inline"></div>
